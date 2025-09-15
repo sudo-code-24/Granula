@@ -2,6 +2,23 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```bash
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here-change-this-in-production
+
+# Database Configuration (if using Prisma)
+DATABASE_URL="file:./dev.db"
+```
+
+**Important:** Replace `your-secret-key-here-change-this-in-production` with a secure random string for production use.
+
+### Development Server
+
 First, run the development server:
 
 ```bash
