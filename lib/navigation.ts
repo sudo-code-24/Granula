@@ -32,7 +32,7 @@ export const navigationConfig = {
       href: "/documents",
     },
   ] as NavigationItem[],
-  
+
   admin: [
     {
       title: "User Management",
@@ -40,17 +40,17 @@ export const navigationConfig = {
       href: "/admin",
     },
   ] as NavigationItem[],
-  
+
   support: [
     {
       title: "Settings",
       icon: Settings,
-      href: "/settings",
+      href: "/",
     },
     {
       title: "Help & Support",
       icon: HelpCircle,
-      href: "/help",
+      href: "/",
     },
   ] as NavigationItem[],
 };
@@ -71,7 +71,7 @@ export function getPageTitle(pathname: string, userRole?: string): string {
 
   // Find the matching item by href
   const matchingItem = allItems.find(item => item.href === pathname);
-  
+
   // Return the title if found, otherwise return a default
   return matchingItem?.title || 'Dashboard';
 }
@@ -86,7 +86,7 @@ export function getNavigationItems(group: 'navigation' | 'admin' | 'support', us
   if (group === 'admin' && userRole !== 'admin') {
     return [];
   }
-  
+
   return navigationConfig[group] || [];
 }
 

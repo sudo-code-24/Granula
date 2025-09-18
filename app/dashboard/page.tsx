@@ -1,30 +1,25 @@
 "use client";
 
-import React, { useEffect } from 'react';
-import { useAuth } from '@/lib/useAuth';
+import React from 'react';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 import { LoadingSpinner } from '@/app/components/LoadingSpinner';
 import { SidebarLayout } from '@/app/components/SidebarLayout';
-import { useRouter } from 'next/navigation';
+import UnauthorizedAccess from '@/app/components/UnauthorizedAccess';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useClientSide } from '@/hooks/use-client-side';
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
+  const isClient = useClientSide();
+  const { user, isLoading, isAuthorized } = useAuthGuard();
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/unauthorized");
-    }
-  }, [user, isLoading, router]);
-
-  if (isLoading) {
+  // Prevent hydration mismatch by not rendering auth-dependent content on server
+  if (!isClient) {
     return <LoadingSpinner />;
   }
 
-  if (!user) {
-    return <LoadingSpinner />;
-  }
+  if (isLoading) return <LoadingSpinner />;
+  if (!isAuthorized) return <UnauthorizedAccess />;
 
   return (
     <SidebarLayout>

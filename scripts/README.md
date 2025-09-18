@@ -1,177 +1,246 @@
-# Page and Component Creation Scripts
+# Database Seeding Scripts
 
-This directory contains scripts to quickly generate new Next.js pages and React components with different layouts and templates.
+This directory contains scripts to seed the database with initial data for development and testing.
 
-## Basic Page Creation
+## Available Scripts
 
-Create a simple page with basic layout:
+### Individual Seeding Scripts
 
+#### `seed-users.ts`
+Seeds the database with users, roles, and profiles.
+
+**Usage:**
 ```bash
-npm run create-page <page-name>
+npm run seed:users
+# or
+npx tsx scripts/seed-users.ts
 ```
 
-**Example:**
+**Creates:**
+- 3 roles (admin, user, manager)
+- 7 users with different roles
+- 5 user profiles with detailed information
+
+**Login Credentials:**
+- Admin: `admin@granula.com` / `admin123`
+- Manager: `manager@granula.com` / `password123`
+- User: `user@granula.com` / `password123`
+- Test: `test@granula.com` / `password123`
+- Demo: `demo@granula.com` / `password123`
+- Simple: `simple@granula.com` / `password123`
+- Basic: `basic@granula.com` / `password123`
+
+#### `seed-products.ts`
+Seeds the database with products, categories, and brands.
+
+**Usage:**
 ```bash
-npm run create-page login
+npm run seed:products
+# or
+npx tsx scripts/seed-products.ts
 ```
 
-This will create:
-- `app/login/page.tsx` - A basic page with centered content
+**Creates:**
+- 5 categories (Electronics, Clothing, Home & Garden, Sports, Books)
+- 5 brands (Apple, Samsung, Nike, Adidas, Sony)
+- 20+ products with full details, images, and relationships
 
-## Advanced Page Creation
+#### `seed-all.ts`
+Comprehensive seeding script that creates all data types.
 
-Create pages with different templates and layouts:
-
+**Usage:**
 ```bash
-npm run create-page-advanced <page-name> [page-type]
+npm run seed:all
+# or
+npx tsx scripts/seed-all.ts
 ```
 
-**Available page types:**
-- `basic` - Simple centered page with title and description (default)
-- `form` - Page with a basic form layout
-- `dashboard` - Dashboard-style layout with header and content area
-- `blank` - Minimal blank page for custom layouts
+**Creates:**
+- All roles, users, and profiles
+- All categories and brands
+- Sample products with relationships
+- Complete database setup for development
 
-**Examples:**
+## Database Schema
+
+### Roles
+- **admin** (level: 100) - Full system access
+- **manager** (level: 50) - Elevated permissions
+- **user** (level: 10) - Standard user access
+
+### Users
+Each user includes:
+- Email and hashed password
+- Role assignment
+- Optional profile with personal details
+- Automatic cart creation
+
+### Categories
+- Electronics
+- Clothing
+- Home & Garden
+- Sports
+- Books
+
+### Brands
+- Apple
+- Samsung
+- Nike
+- Adidas
+- Sony
+
+### Products
+Sample products include:
+- Smartphones (iPhone 15 Pro, Galaxy S24 Ultra)
+- Headphones (Sony WH-1000XM5)
+- Shoes (Nike Air Max 270, Adidas Ultraboost 22)
+- And more...
+
+## Prerequisites
+
+1. **Database Setup**: Ensure PostgreSQL is running and configured
+2. **Environment Variables**: Set `DATABASE_URL` in `.env`
+3. **Prisma Client**: Run `npx prisma generate` before seeding
+4. **Dependencies**: Install with `npm install`
+
+## Running Seeding Scripts
+
+### Quick Start
 ```bash
-# Create a login page with form layout
-npm run create-page-advanced login form
+# Generate Prisma client
+npx prisma generate
 
-# Create a dashboard page
-npm run create-page-advanced dashboard dashboard
-
-# Create a contact page with basic layout
-npm run create-page-advanced contact
-
-# Create a blank page for custom layout
-npm run create-page-advanced custom blank
+# Seed everything
+npm run seed:all
 ```
 
-## What Gets Created
+### Step by Step
+```bash
+# 1. Generate Prisma client
+npx prisma generate
 
-Each script will:
-1. Create a new folder in `app/<page-name>/`
-2. Generate a `page.tsx` file with the appropriate template
-3. Use kebab-case for folder names (e.g., "userProfile" becomes "user-profile")
-4. Include proper TypeScript and React imports
-5. Use Tailwind CSS classes for styling
+# 2. Run migrations (if needed)
+npx prisma migrate dev
 
-## Templates
+# 3. Seed users
+npm run seed:users
 
-### Basic Template
-- Centered content with title and description
-- Clean, minimal design
-- Good for simple informational pages
+# 4. Seed products
+npm run seed:products
 
-### Form Template
-- Form layout with email and password fields
-- Styled with Tailwind CSS
-- Ready for form handling logic
+# 5. Or seed everything at once
+npm run seed:all
+```
 
-### Dashboard Template
-- Header with page title
-- Large content area for widgets/components
-- Professional dashboard appearance
+## Script Features
 
-### Blank Template
-- Minimal structure
-- Perfect for custom layouts
-- Just the basic React component structure
+### Error Handling
+- Comprehensive error handling and logging
+- Graceful failure with detailed error messages
+- Database connection cleanup
+
+### Data Integrity
+- Uses `upsert` operations to prevent duplicates
+- Maintains referential integrity
+- Handles existing data gracefully
+
+### Logging
+- Detailed progress logging
+- Summary statistics
+- Clear success/failure indicators
+
+### Security
+- Passwords are properly hashed with bcrypt
+- Uses secure salt rounds (12)
+- No plain text passwords in logs
 
 ## Customization
 
-After creating a page, you can:
-- Modify the component logic
-- Add more components
-- Customize the styling
-- Add routing logic
-- Include additional files (components, styles, etc.)
+### Adding New Users
+Edit `scripts/seed-users.ts` and add to the `users` array:
 
-## Notes
+```typescript
+{
+  email: 'newuser@granula.com',
+  password: hashedPassword,
+  roleId: userRole.id,
+  profile: {
+    firstName: 'New',
+    lastName: 'User',
+    // ... other profile fields
+  },
+}
+```
 
-- Pages are automatically accessible at `http://localhost:3000/<page-name>`
-- The scripts check for existing pages to avoid conflicts
-- All templates use modern React patterns and TypeScript
-- Styling is done with Tailwind CSS classes
+### Adding New Products
+Edit `scripts/seed-products.ts` and add to the `products` array:
 
-## Component Creation
+```typescript
+{
+  title: 'New Product',
+  description: 'Product description',
+  price: 99.99,
+  // ... other product fields
+  categoryId: category.id,
+  brandId: brand.id,
+}
+```
 
-Create React components with different templates and functionality:
+### Adding New Categories/Brands
+Edit the respective arrays in the seeding scripts to add new categories or brands.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Prisma Client Not Generated**
+   ```bash
+   npx prisma generate
+   ```
+
+2. **Database Connection Issues**
+   - Check `DATABASE_URL` in `.env`
+   - Ensure PostgreSQL is running
+   - Verify database exists
+
+3. **Migration Issues**
+   ```bash
+   npx prisma migrate dev
+   ```
+
+4. **Permission Issues**
+   - Ensure database user has proper permissions
+   - Check database connection settings
+
+### Reset Database
+If you need to reset the database:
 
 ```bash
-npm run create-component <component-name> [component-type]
+# Reset database (WARNING: This deletes all data)
+npx prisma migrate reset
+
+# Then re-seed
+npm run seed:all
 ```
 
-**Available component types:**
-- `basic` - Simple component with children and className props (default)
-- `form` - Form component with state management and handlers
-- `card` - Card component with title and content areas
-- `button` - Button component with variants and sizes
-- `modal` - Modal component with overlay and close functionality
-- `blank` - Minimal component structure for custom implementations
+## Development Workflow
 
-**Examples:**
-```bash
-# Create a basic button component
-npm run create-component Button
+1. **Initial Setup**: Run `npm run seed:all` for complete setup
+2. **Add Users**: Use `npm run seed:users` for new user accounts
+3. **Add Products**: Use `npm run seed:products` for new product data
+4. **Reset Data**: Use `npx prisma migrate reset` to start fresh
 
-# Create a user card component
-npm run create-component UserCard card
+## Production Considerations
 
-# Create a login form component
-npm run create-component LoginForm form
+⚠️ **Warning**: These scripts are designed for development and testing only. Do not run them in production environments.
 
-# Create a modal component
-npm run create-component Modal modal
+For production:
+- Use proper data migration tools
+- Implement secure user registration
+- Use production-grade data sources
+- Follow security best practices
 
-# Create a custom component
-npm run create-component CustomComponent blank
-```
+---
 
-**What Gets Created:**
-- Components are placed in `app/components/` directory
-- Files are named in PascalCase (e.g., `Button.tsx`)
-- Includes proper TypeScript interfaces and React patterns
-- Uses Tailwind CSS for styling
-- Ready-to-use component templates
-
-**Component Templates:**
-
-### Basic Template
-- Simple wrapper component with children and className props
-- Perfect for layout components or simple wrappers
-
-### Form Template
-- Form component with state management
-- Includes form submission and change handlers
-- Ready for form field customization
-
-### Card Template
-- Card component with title and content areas
-- Includes click handler support
-- Styled with shadows and rounded corners
-
-### Button Template
-- Button component with multiple variants (primary, secondary, outline, ghost)
-- Different sizes (sm, md, lg)
-- Includes disabled state and type support
-
-### Modal Template
-- Modal component with overlay and close functionality
-- ESC key support and body scroll locking
-- Responsive design with proper z-index
-
-### Blank Template
-- Minimal component structure
-- Perfect for custom implementations
-- Just the basic React component boilerplate
-
-**Usage After Creation:**
-```tsx
-import Button from '@/components/Button';
-import UserCard from '@/components/UserCard';
-
-// Use in your components
-<Button variant="primary" size="lg">Click me</Button>
-<UserCard title="User Info">Content here</UserCard>
-```
+**Last Updated**: January 2025  
+**Maintainer**: Development Team

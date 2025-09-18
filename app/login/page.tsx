@@ -1,20 +1,24 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Custom_Button from '../components/Custom_Button';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuthGuard } from '@/lib/useAuthGuard';
+import { useClientSide } from '@/hooks/use-client-side';
+import { useErrorHandler } from '@/hooks/use-error-handler';
 
 export default function LoginPage() {
   const [user, setUser] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const isClient = useClientSide();
   const router = useRouter();
+  const { handleAuthError, handleError, success } = useErrorHandler();
 
   const setEmail = (email: string) => setUser(prev => ({ ...prev, email }));
   const setPassword = (password: string) => setUser(prev => ({ ...prev, password }));
@@ -32,22 +36,44 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
+        // Handle authentication error with toast notification
+        handleAuthError(new Error(result.error), 'Login');
         setError('Invalid email or password');
       } else {
         // Get the session to verify login was successful
         const session = await getSession();
         if (session) {
+          success('Login successful', 'Welcome back!');
           router.push('/dashboard');
+        } else {
+          handleAuthError(new Error('Session not created'), 'Login');
         }
       }
     } catch (error) {
+      // Handle any other errors (network, database, etc.)
+      handleError(error, 'Login');
       setError('An error occurred during login');
-      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
   };
+  const authGuard = useAuthGuard();
 
+  // Handle redirect when user is already authorized
+  useEffect(() => {
+    if (isClient && !authGuard.isLoading && authGuard.isAuthorized) {
+      router.push('/dashboard');
+    }
+  }, [isClient, authGuard.isLoading, authGuard.isAuthorized, router]);
+
+  // Prevent hydration mismatch by not rendering auth-dependent content on server
+  if (!isClient) {
+    return <LoadingSpinner />;
+  }
+
+  if (authGuard.isLoading) return <LoadingSpinner />;
+  if (authGuard.isAuthorized) return <LoadingSpinner />; // Show loading while redirecting
+  
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-sm ">
@@ -94,10 +120,10 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex-col gap-2">
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full hover:scale-105 transition-transform">
               {isLoading ? <LoadingSpinner size="sm" /> : 'Sign In'}
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full hover:scale-105 transition-transform">
               Login with Google
             </Button>
           </CardFooter>

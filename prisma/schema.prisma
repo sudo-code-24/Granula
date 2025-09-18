@@ -9,10 +9,10 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
+  id           Int       @id @default(autoincrement())
   email        String    @unique
   password     String
-  roleId       String
+  roleId       Int
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   loginToken   String?
@@ -20,12 +20,13 @@ model User {
   accounts     Account[]
   profile      Profile?
   sessions     Session[]
+  cart         Cart?
   role         Role      @relation(fields: [roleId], references: [id])
 }
 
 model Profile {
-  id         String    @id @default(cuid())
-  userId     String    @unique
+  id         Int       @id @default(autoincrement())
+  userId     Int       @unique
   firstName  String?
   lastName   String?
   position   String?
@@ -37,7 +38,7 @@ model Profile {
 }
 
 model Role {
-  id          String   @id @default(cuid())
+  id          Int      @id @default(autoincrement())
   name        String   @unique
   description String?
   level       Int
@@ -47,8 +48,8 @@ model Role {
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
+  id                Int     @id @default(autoincrement())
+  userId            Int
   type              String
   provider          String
   providerAccountId String
@@ -65,9 +66,9 @@ model Account {
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           Int      @id @default(autoincrement())
   sessionToken String   @unique
-  userId       String
+  userId       Int
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -78,4 +79,85 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  slug        String    @unique
+  image       String?
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Brand {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  logo        String?
+  website     String?
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                Int      @id @default(autoincrement())
+  title             String
+  description       String
+  price             Float
+  discountPercentage Float   @default(0)
+  rating            Float   @default(0)
+  stock             Int     @default(0)
+  sku               String? @unique
+  slug              String  @unique
+  thumbnail         String?
+  images            String[] @default([])
+  tags              String[] @default([])
+  isActive          Boolean  @default(true)
+  categoryId        Int
+  brandId           Int
+  category          Category @relation(fields: [categoryId], references: [id])
+  brand             Brand    @relation(fields: [brandId], references: [id])
+  reviews           Review[]
+  cartItems         CartItem[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  rating    Int
+  comment   String?
+  author    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int      @default(1)
+  addedAt   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([cartId, productId])
 }

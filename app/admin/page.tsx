@@ -1,49 +1,45 @@
 "use client";
 
 import React from 'react';
-import { useAuth } from '@/lib/useAuth';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 import { LoadingSpinner } from '@/app/components/LoadingSpinner';
+import UnauthorizedAccess from '@/app/components/UnauthorizedAccess';
+import { useAuth } from '@/lib/useAuth';
+import { useClientSide } from '@/hooks/use-client-side';
+import { useErrorHandler } from '@/hooks/use-error-handler';
+import { ProductAPI } from '@/lib/api/products';
+import { Product } from '@/types/product';
+import { useState, useEffect } from 'react';
 
 export default function AdminPage() {
-  const { user, isLoading, logout } = useAuth();
+  const isClient = useClientSide();
+  const { user, isLoading, isAuthorized } = useAuthGuard('admin');
+  const { logout } = useAuth();
+  const { handleError, success } = useErrorHandler();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await ProductAPI.getProducts({ limit: 50 });
+        setProducts(data.products);
+        success('Products loaded', `${data.products.length} products in database`);
+      } catch (error) {
+        handleError(error, 'Loading Products');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-4">
-            Access Denied
-          </h1>
-          <p className="text-gray-600">
-            Please log in to access the admin panel.
-          </p>
-        </div>
-      </div>
-    );
-  }
+    if (isClient && isAuthorized) {
+      fetchProducts();
+    }
+  }, [isClient, isAuthorized, handleError, success]);
 
-  // Check if user has admin role
-  if (user.role?.name !== 'admin') {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-red-600 mb-4">
-            Access Forbidden
-          </h1>
-          <p className="text-gray-600 mb-4">
-            You don't have permission to access the admin panel.
-          </p>
-          <p className="text-sm text-gray-500">
-            Your role: {user.role?.name || 'No role assigned'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (!isClient) return <LoadingSpinner />;
+  if (isLoading) return <LoadingSpinner />;
+  if (!isAuthorized) return <UnauthorizedAccess />;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -61,11 +57,110 @@ export default function AdminPage() {
             </button>
           </div>
           <p className="text-sm text-gray-600 mt-2">
-            Welcome, {user.email} (Admin)
+            Welcome, {user?.email} (Admin)
           </p>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4">
+            {/* Products Management Section */}
+            <div className="bg-white shadow rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Products Management</h3>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <LoadingSpinner />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Product
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Price
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Stock
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Rating
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {products.map((product) => (
+                        <tr key={product.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10">
+                                {product.thumbnail ? (
+                                  <img
+                                    className="h-10 w-10 rounded-full object-cover"
+                                    src={product.thumbnail}
+                                    alt={product.title}
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <span className="text-gray-500 text-sm">📦</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {product.title}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {product.brand.name}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center">
+                              <span className="text-blue-600 font-medium">
+                                {product.category.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${product.price.toFixed(2)}
+                            {product.discountPercentage > 0 && (
+                              <span className="ml-2 text-green-600 text-xs">
+                                -{product.discountPercentage}%
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              product.stock > 10 
+                                ? 'bg-green-100 text-green-800' 
+                                : product.stock > 0 
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {product.stock} in stock
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center">
+                              <span className="text-yellow-400">⭐</span>
+                              <span className="ml-1">{product.rating.toFixed(1)}</span>
+                              <span className="ml-1 text-gray-500">({product.reviews.length})</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Other Admin Sections */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-white shadow rounded-lg p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">

@@ -9,6 +9,7 @@ export function useAuth() {
 
   const logout = async () => {
     await signOut({ redirect: false })
+    localStorage.removeItem("cart")
     router.push("/login")
   }
 

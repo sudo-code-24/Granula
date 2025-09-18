@@ -10,8 +10,9 @@ import {
   LogOut,
   Users,
   BarChart3,
-  FileText,
-  HelpCircle
+  UserLock,
+  HelpCircle,
+  Store,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -27,6 +28,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { CartIcon } from './Cart';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -61,13 +63,18 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       icon: User,
       href: "/profile",
     },
-    
+    {
+      title: "Products",
+      icon: Store,
+      href: "/products",
+    },
+
   ];
 
   const adminItems = user?.role?.name === 'admin' ? [
     {
-      title: "User Management",
-      icon: Users,
+      title: "Admin Portal",
+      icon: UserLock,
       href: "/admin",
     },
   ] : [];
@@ -76,12 +83,12 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     {
       title: "Settings",
       icon: Settings,
-      href: "/settings",
+      href: "/",
     },
     {
       title: "Help & Support",
       icon: HelpCircle,
-      href: "/help",
+      href: "/",
     },
   ];
 
@@ -99,7 +106,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-semibold">Granula</span>
-                <span className="text-xs text-muted-foreground">Dashboard</span>
+                {/* <span className="text-xs text-muted-foreground">Dashboard</span> */}
               </div>
             </div>
           </SidebarHeader>
@@ -116,9 +123,9 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
                         tooltip={item.title}
                         onClick={() => navigate(item.href)}
                       >
-                        <div className="cursor-pointer flex items-center gap-2">
+                        <div className="cursor-pointer flex  items-center gap-2">
                           <item.icon />
-                          <span>{item.title}</span>
+                          <span className={item.href == pathName ? 'font-bold text-amber-500' : ''}>{item.title}</span>
                         </div>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -157,16 +164,16 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
                 <SidebarMenu>
                   {supportItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                       <SidebarMenuButton
-                          asChild
-                          tooltip={item.title}
-                          onClick={() => navigate(item.href)}
-                        >
-                          <div className="cursor-pointer flex items-center gap-2">
-                            <item.icon />
-                            <span>{item.title}</span>
-                          </div>
-                        </SidebarMenuButton>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.title}
+                        onClick={() => navigate(item.href)}
+                      >
+                        <div className="cursor-pointer flex items-center gap-2">
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </div>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
@@ -210,6 +217,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
             <div className="flex-1">
               <h1 className="text-lg font-semibold">{getCurrentPageTitle()}</h1>
             </div>
+            <CartIcon />
           </header>
           <div className="p-6">
             {children}
