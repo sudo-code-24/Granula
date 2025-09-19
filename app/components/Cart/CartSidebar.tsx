@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAppSelector, useAppDispatch } from '@/lib/hooks';
-import { closeCart, removeFromCart, updateQuantity, clearCart } from '@/lib/store/cartSlice';
+import { closeCart } from '@/lib/store/cartSlice';
 import { ShoppingCart, X } from 'lucide-react';
 import { CartItemCard, CartSidebarFooter } from '.';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ export default function CartSidebar() {
                 variant={"ghost"}
                 className="p-1 hover:bg-muted rounded"
               >
-               <X/>
+                <X />
               </Button>
             </div>
 

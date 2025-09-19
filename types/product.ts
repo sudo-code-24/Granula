@@ -71,3 +71,12 @@ export interface ProductResponse {
   success: boolean;
   message?: string;
 }
+
+export interface ProductFilter {
+  categoryIds?: number[];
+  brandIds?: number[];
+  priceRange?: [number, number];
+  minRating?: number;
+  tags?: string[];
+  isActive?: boolean;
+}

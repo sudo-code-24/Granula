@@ -41,7 +41,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
   };
 
   // Function to get the current page title based on pathname

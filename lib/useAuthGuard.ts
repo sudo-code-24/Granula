@@ -10,6 +10,8 @@ export function useAuthGuard(requiredRole?: string) {
   const pathname = usePathname();
 
   useEffect(() => {
+    console.log(pathname);
+    
     if (!isLoading && !user && !pathname.startsWith('/login')) {
       router.push('/unauthorized');
     }

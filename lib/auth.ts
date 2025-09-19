@@ -6,7 +6,7 @@ export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, saltRounds);
 }
 
-export async function createUser(email: string, password: string, roleId: string, profileData?: Record<string, unknown>) {
+export async function createUser(email: string, password: string, roleId: number, profileData?: Record<string, unknown>) {
   const hashedPassword = await hashPassword(password);
   
   return prisma.user.create({
@@ -38,7 +38,7 @@ export async function getUserByEmail(email: string) {
 }
 
 // Additional auth helper functions
-export async function getUserById(id: string) {
+export async function getUserById(id: number) {
   return prisma.user.findUnique({
     where: { id },
     include: {
@@ -48,7 +48,7 @@ export async function getUserById(id: string) {
   });
 }
 
-export async function updateUserPassword(id: string, newPassword: string) {
+export async function updateUserPassword(id: number, newPassword: string) {
   const hashedPassword = await hashPassword(newPassword);
   
   return prisma.user.update({
@@ -57,7 +57,7 @@ export async function updateUserPassword(id: string, newPassword: string) {
   });
 }
 
-export async function createUserProfile(userId: string, profileData: Record<string, unknown>) {
+export async function createUserProfile(userId: number, profileData: Record<string, unknown>) {
   return prisma.profile.create({
     data: {
       userId,
@@ -66,14 +66,14 @@ export async function createUserProfile(userId: string, profileData: Record<stri
   });
 }
 
-export async function updateUserProfile(userId: string, profileData: Record<string, unknown>) {
+export async function updateUserProfile(userId: number, profileData: Record<string, unknown>) {
   return prisma.profile.update({
     where: { userId },
     data: profileData
   });
 }
 
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: number) {
   return prisma.profile.findUnique({
     where: { userId },
     include: {

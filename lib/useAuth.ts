@@ -8,9 +8,8 @@ export function useAuth() {
   const router = useRouter()
 
   const logout = async () => {
-    await signOut({ redirect: false })
     localStorage.removeItem("cart")
-    router.push("/login")
+    await signOut({ redirect: true , callbackUrl: '/login'})
   }
 
   return {
