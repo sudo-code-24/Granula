@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { cn } from "@/lib/utils";
 import { X, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import { useState } from "react";
 
 export interface Option {
   value: string;
@@ -44,8 +44,8 @@ export function MultiSelect({
   disabled,
   className,
 }: MultiSelectProps) {
-  const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState("");
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const filtered = options.filter((o) =>
     o.label.toLowerCase().includes(search.toLowerCase())
@@ -71,25 +71,7 @@ export function MultiSelect({
         >
           {selected.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              {selected.map((val) => {
-                const opt = options.find((o) => o.value === val);
-                return (
-                  <Badge
-                    key={val}
-                    className="flex items-center gap-1"
-                    variant="secondary"
-                  >
-                    {opt?.label}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleValue(val);
-                      }}
-                    />
-                  </Badge>
-                );
-              })}
+              Selected {selected.length} item{selected.length > 1 ? 's' : ''}
             </div>
           ) : (
             <span className="text-muted-foreground">{placeholder}</span>

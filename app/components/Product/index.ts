@@ -6,3 +6,5 @@ export { default as ProductRating } from "./ProductRating";
 export { default as ProductPrice } from "./ProductPrice";
 export { default as ProductTags } from "./ProductTags";
 export {default as AddToCartButton } from "./AddToCartButton";
+export { default as ProductFilterPopup } from "./ProductFilterPopup";
+export { default as FilterTrigger } from "./FilterTrigger";
