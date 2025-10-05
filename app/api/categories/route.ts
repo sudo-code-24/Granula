@@ -1,30 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/database';
 import { ErrorHandler } from '@/lib/error-handler';
+import { validateIsActiveParams, parseIsActive } from '../helpers';
+import { CategoryService } from '@/lib/services/category.service';
 
 export async function GET(request: NextRequest) {
   try {
+    const categoryService = new CategoryService();
     const { searchParams } = new URL(request.url);
-    const isActive = searchParams.get('isActive');
-
-    const where: any = {};
-    if (isActive !== null) {
-      where.isActive = isActive === 'true';
+    const paramsIsActive = searchParams.get('isActive');
+    if (!validateIsActiveParams(paramsIsActive)) {
+      return NextResponse.json(
+        { error: 'Invalid Request' },
+        { status: 400 }
+      );
     }
-
-    const categories = await prisma.category.findMany({
-      where,
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
+    const categories = await categoryService.getCategories(parseIsActive(paramsIsActive))
     return NextResponse.json(categories);
 
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    ErrorHandler.handleDatabaseError(error, 'Fetching Categories');
-    
     return NextResponse.json(
       { error: 'Failed to fetch categories' },
       { status: 500 }
@@ -34,6 +28,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const categoryService = new CategoryService();
     const body = await request.json();
     const { name, description, image } = body;
 
@@ -62,7 +57,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating category:', error);
     ErrorHandler.handleDatabaseError(error, 'Creating Category');
-    
+
     return NextResponse.json(
       { error: 'Failed to create category' },
       { status: 500 }

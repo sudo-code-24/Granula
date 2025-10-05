@@ -1,42 +1,30 @@
+import { Brand, Category } from "@/app/generated/prisma";
+
 export interface Dimensions {
   width: number;
   height: number;
   depth: number;
 }
 
-export interface Review {
-  id: number;
+export interface Review extends AuditableFields {
   rating: number;
   comment?: string;
   author?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Category {
+export interface AuditableFields {
   id: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CommonFields {
   name: string;
   description?: string;
-  slug: string;
-  image?: string;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Brand {
-  id: number;
-  name: string;
-  description?: string;
-  logo?: string;
-  website?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Product {
-  id: number;
+export interface Product extends AuditableFields {
   title: string;
   description: string;
   price: number;
@@ -54,8 +42,6 @@ export interface Product {
   category: Category;
   brand: Brand;
   reviews: Review[];
-  createdAt: string;
-  updatedAt: string;
 }
 // API response types
 export interface ProductListResponse {
@@ -71,12 +57,27 @@ export interface ProductResponse {
   success: boolean;
   message?: string;
 }
+export type SortOption =
+  | "price_asc"
+  | "price_desc"
+  | "rating_asc"
+  | "newest"
+  | "oldest"
+  | "popular"
+  | "";
 
 export interface ProductFilter {
   categoryIds?: number[];
   brandIds?: number[];
-  priceRange?: [number, number];
+  priceRange?: PriceRange;
   minRating?: number;
+  sort?: SortOption;
   tags?: string[];
   isActive?: boolean;
+  search?: string
+}
+
+export interface PriceRange {
+  min: number;
+  max: number
 }

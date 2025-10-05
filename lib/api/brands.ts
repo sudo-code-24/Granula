@@ -1,31 +1,26 @@
-export interface Brand {
-  id: number;
-  name: string;
-  description?: string;
-  logo?: string;
-  website?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Brand } from "@/app/generated/prisma";
+import { APIResponse } from "@/types/APIResponse";
 
 export class BrandAPI {
   private static baseUrl = '/api/brands';
-
   /**
    * Fetch all brands
    */
-  static async getBrands(isActive: boolean = true): Promise<Brand[]> {
-    const params = new URLSearchParams();
-    params.append('isActive', isActive.toString());
+  static async getBrands(isActive: boolean = true): Promise<APIResponse<Brand[]>> {
+    try {
+      const params = new URLSearchParams();
+      params.append('isActive', isActive.toString());
 
-    const url = `${this.baseUrl}?${params.toString()}`;
-    const response = await fetch(url);
+      const url = `${this.baseUrl}?${params.toString()}`;
+      const response = await fetch(url);
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch brands: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch brands: ${response.status}`);
+      }
+      const result: APIResponse<Brand[]> = await response.json();
+      return result;
+    } catch (err) {
+      throw err;
     }
-
-    return response.json();
   }
 }

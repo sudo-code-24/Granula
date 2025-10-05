@@ -107,13 +107,13 @@ const cartSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-    .addCase(fetchCart.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.items = action.payload.items;
-      const { totalItems, totalPrice } = calculateTotals(action.payload.items);
-      state.totalItems = totalItems;
-      state.totalPrice = totalPrice;
-    })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload.items;
+        const { totalItems, totalPrice } = calculateTotals(action.payload.items);
+        state.totalItems = totalItems;
+        state.totalPrice = totalPrice;
+      })
       .addCase(fetchCart.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
@@ -128,7 +128,7 @@ const cartSlice = createSlice({
       .addCase(addToCart.fulfilled, (state, action) => {
         state.isLoading = false;
         const existingItemIndex = state.items.findIndex(item => item.id === action.payload.id);
-        
+
         if (existingItemIndex >= 0) {
           // Update existing item
           state.items[existingItemIndex] = action.payload;
@@ -136,7 +136,8 @@ const cartSlice = createSlice({
           // Add new item
           state.items.push(action.payload);
         }
-        
+        console.log(state);
+
         const { totalItems, totalPrice } = calculateTotals(state.items);
         state.totalItems = totalItems;
         state.totalPrice = totalPrice;
@@ -155,7 +156,7 @@ const cartSlice = createSlice({
       .addCase(updateItemQuantity.fulfilled, (state, action) => {
         state.isLoading = false;
         const { id, quantity } = action.payload;
-        
+
         if (quantity <= 0) {
           // Remove item if quantity is 0 or negative
           state.items = state.items.filter(item => item.id !== id);
@@ -166,7 +167,7 @@ const cartSlice = createSlice({
             item.quantity = quantity;
           }
         }
-        
+
         const { totalItems, totalPrice } = calculateTotals(state.items);
         state.totalItems = totalItems;
         state.totalPrice = totalPrice;
@@ -185,7 +186,7 @@ const cartSlice = createSlice({
       .addCase(removeFromCart.fulfilled, (state, action) => {
         state.isLoading = false;
         state.items = state.items.filter(item => item.id !== action.payload);
-        
+
         const { totalItems, totalPrice } = calculateTotals(state.items);
         state.totalItems = totalItems;
         state.totalPrice = totalPrice;

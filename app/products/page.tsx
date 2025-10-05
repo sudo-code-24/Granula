@@ -7,7 +7,7 @@ import { useAuthGuard } from '@/lib/useAuthGuard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import UnauthorizedAccess from '../components/UnauthorizedAccess';
 import { ProductCard } from '../components/Product';
-import { Product } from '@/types/product';
+import { Product, ProductFilter } from '@/types/product';
 import {
   Pagination,
   PaginationContent,
@@ -21,7 +21,8 @@ import { useClientSide } from '@/hooks/use-client-side';
 import { useErrorHandler } from '@/hooks/use-error-handler';
 import { fetchProducts } from './actions';
 import { paginationUtils } from '../../lib/pagination-utils';
-import ProductFilter from '../components/Product/ProductFilter';
+import ProductFilterComponent from '../components/Product/ProductFilter';
+import { defaultFilters } from '@/lib/helpers';
 
 export default function ProductsPage() {
   const isClient = useClientSide();
@@ -32,6 +33,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [productFilter, setProductFilter] = useState<ProductFilter>({ ...defaultFilters })
 
   const productsPerPage = 12;
 
@@ -41,6 +43,7 @@ export default function ProductsPage() {
         const data = await fetchProducts({
           page: currentPage,
           limit: productsPerPage,
+          filter: productFilter
         });
 
         setProducts(data.products);
@@ -60,7 +63,7 @@ export default function ProductsPage() {
     if (isAuthorized) {
       loadProducts();
     }
-  }, [isAuthorized, currentPage, productsPerPage, handleNetworkError, success]);
+  }, [isAuthorized, currentPage, productsPerPage,productFilter, handleNetworkError, success]);
 
   // Products are already paginated by the API
   const currentProducts = products;
@@ -102,7 +105,7 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <ProductFilter />
+        <ProductFilterComponent onApplyFilters={setProductFilter} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {currentProducts.map((product: Product) => (

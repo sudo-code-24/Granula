@@ -15,8 +15,6 @@ export class ErrorHandler {
    * Handle database errors with appropriate toast notifications
    */
   static handleDatabaseError(error: unknown, context?: string): void {
-    console.error('Database Error:', error);
-
     let errorMessage = 'A database error occurred';
     let errorDetails = 'Please try again later';
 

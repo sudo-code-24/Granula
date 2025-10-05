@@ -1,30 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/database';
 import { ErrorHandler } from '@/lib/error-handler';
+import { BrandService } from '@/lib/services/brand.service';
+import { validateIsActiveParams, parseIsActive } from '../helpers';
 
 export async function GET(request: NextRequest) {
+  const brandService = new BrandService();
   try {
     const { searchParams } = new URL(request.url);
-    const isActive = searchParams.get('isActive');
-
-    const where: any = {};
-    if (isActive !== null) {
-      where.isActive = isActive === 'true';
+    const paramsIsActive = searchParams.get('isActive');
+    if (!validateIsActiveParams(paramsIsActive)) {
+      return NextResponse.json(
+        { error: 'Invalid Request' },
+        { status: 400 }
+      );
     }
-
-    const brands = await prisma.brand.findMany({
-      where,
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
+    const brands = await brandService.getBrands(parseIsActive(paramsIsActive))
     return NextResponse.json(brands);
 
   } catch (error) {
-    console.error('Error fetching brands:', error);
-    ErrorHandler.handleDatabaseError(error, 'Fetching Brands');
-    
     return NextResponse.json(
       { error: 'Failed to fetch brands' },
       { status: 500 }
@@ -59,7 +53,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating brand:', error);
     ErrorHandler.handleDatabaseError(error, 'Creating Brand');
-    
+
     return NextResponse.json(
       { error: 'Failed to create brand' },
       { status: 500 }

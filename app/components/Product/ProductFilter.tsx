@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { BrandAPI } from '@/lib/api/brands';
 import { CategoryAPI } from '@/lib/api/categories';
-import { Category, Brand } from '@/types/product';
+import { ProductFilter, PriceRange } from '@/types/product';
 import ProductFilterPopup from './ProductFilterPopup';
 import FilterTrigger from './FilterTrigger';
 import { useErrorHandler } from '@/hooks/use-error-handler';
+import { defaultFilters, getPriceRangeLabel, getLabelbyId, getLabelByValue, sortFilterOptions } from '@/lib/helpers';
+import { Category, Brand } from '@/app/generated/prisma';
+import { APIResponse } from '@/types/APIResponse';
 
-export default function ProductFilter() {
+interface ProductFilterProps {
+  onApplyFilters?: (filters: ProductFilter) => void;
+}
+
+export default function ProductFilterComponent({ onApplyFilters }: ProductFilterProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState({
-    categories: [],
-    brands: [],
-    priceRange: '',
-    sort: '',
-    search: '',
-  });
+  const [appliedFilters, setAppliedFilters] = useState<ProductFilter>({ ...defaultFilters });
   const { handleNetworkError, success } = useErrorHandler();
 
   // Fetch categories and brands on component mount
@@ -25,12 +26,17 @@ export default function ProductFilter() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [categoriesData, brandsData] = await Promise.all([
+        const [categoriesData, brandsData]: [APIResponse<Category[]>, APIResponse<Brand[]>] = await Promise.all([
           CategoryAPI.getCategories(true),
           BrandAPI.getBrands(true)
         ]);
-        setCategories(categoriesData);
-        setBrands(brandsData);
+
+        if (categoriesData.success && categoriesData.data) {
+          setCategories(categoriesData.data);
+        }
+        if (brandsData.success && brandsData.data) {
+          setBrands(brandsData.data);
+        }
         success('Filter data loaded', 'Categories and brands loaded successfully');
 
       } catch (error) {
@@ -44,15 +50,18 @@ export default function ProductFilter() {
     fetchData();
   }, []);
 
-  const handleApplyFilters = (filters: any) => {
+  const handleApplyFilters = (filters: ProductFilter) => {
+    console.log("updated", { filters });
     setAppliedFilters(filters);
+    console.log({ appliedFilters });
+
     // Here you would typically trigger a search/filter action
-    console.log('Applied filters:', filters);
+    onApplyFilters?.(filters);
   };
 
   const getActiveFiltersCount = () => {
-    return appliedFilters.categories.length +
-      appliedFilters.brands.length +
+    return (appliedFilters?.categoryIds?.length ?? 0) +
+      (appliedFilters?.brandIds?.length ?? 0) +
       (appliedFilters.priceRange ? 1 : 0) +
       (appliedFilters.sort ? 1 : 0);
   };
@@ -104,13 +113,13 @@ export default function ProductFilter() {
         {getActiveFiltersCount() > 0 && (
           <div className="flex flex-wrap gap-2">
             {/* Active Filter Tags - Dynamically generated based on applied filters */}
-            {appliedFilters.categories.map(category => (
-              <div key={category} className="px-3 py-1 bg-orange-500 text-white text-sm rounded-full flex items-center gap-2">
-                <span>{category}</span>
+            {appliedFilters.categoryIds && appliedFilters.categoryIds.map(categoryId => (
+              <div key={categoryId} className="px-3 py-1 bg-orange-500 text-white text-sm rounded-full flex items-center gap-2">
+                <span>{getLabelbyId(categories, categoryId)}</span>
                 <button
                   onClick={() => setAppliedFilters(prev => ({
                     ...prev,
-                    categories: prev.categories.filter(c => c !== category)
+                    categories: prev?.categoryIds?.filter(c => c !== categoryId)
                   }))}
                   className="hover:bg-orange-600 rounded-full p-0.5"
                 >
@@ -120,13 +129,13 @@ export default function ProductFilter() {
                 </button>
               </div>
             ))}
-            {appliedFilters.brands.map(brand => (
-              <div key={brand} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-full flex items-center gap-2">
-                <span>{brand}</span>
+            {appliedFilters.brandIds && appliedFilters.brandIds.map(brandId => (
+              <div key={brandId} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-full flex items-center gap-2">
+                <span>{getLabelbyId(brands, brandId)}</span>
                 <button
                   onClick={() => setAppliedFilters(prev => ({
                     ...prev,
-                    brands: prev.brands.filter(b => b !== brand)
+                    brands: prev?.brandIds?.filter(b => b !== brandId)
                   }))}
                   className="hover:bg-blue-600 rounded-full p-0.5"
                 >
@@ -136,11 +145,11 @@ export default function ProductFilter() {
                 </button>
               </div>
             ))}
-            {appliedFilters.priceRange && (
+            {(appliedFilters.priceRange && appliedFilters.priceRange != defaultFilters?.priceRange) && (
               <div className="px-3 py-1 bg-green-500 text-white text-sm rounded-full flex items-center gap-2">
-                <span>{appliedFilters.priceRange.replace('-', ' - ').replace('under', 'Under $').replace('over', 'Over $')}</span>
+                <span>{getPriceRangeLabel(appliedFilters.priceRange).replace('-', ' - ').replace('under', 'Under $').replace('over', 'Over $')}</span>
                 <button
-                  onClick={() => setAppliedFilters(prev => ({ ...prev, priceRange: '' }))}
+                  onClick={() => setAppliedFilters(prev => ({ ...prev, priceRange: defaultFilters.priceRange }))}
                   className="hover:bg-green-600 rounded-full p-0.5"
                 >
                   <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,9 +160,9 @@ export default function ProductFilter() {
             )}
             {appliedFilters.sort && (
               <div className="px-3 py-1 bg-purple-500 text-white text-sm rounded-full flex items-center gap-2">
-                <span>{appliedFilters.sort.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                <span>{getLabelByValue(sortFilterOptions, appliedFilters.sort)?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
                 <button
-                  onClick={() => setAppliedFilters(prev => ({ ...prev, sort: '' }))}
+                  onClick={() => setAppliedFilters(prev => ({ ...prev, sort: defaultFilters.sort }))}
                   className="hover:bg-purple-600 rounded-full p-0.5"
                 >
                   <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,7 +173,7 @@ export default function ProductFilter() {
             )}
             {/* Clear All Filters Button */}
             <button
-              onClick={() => setAppliedFilters({ categories: [], brands: [], priceRange: '', sort: '', search: '' })}
+              onClick={() => handleApplyFilters({ ...defaultFilters })}
               className="px-3 py-1 bg-red-500/20 text-red-300 text-sm rounded-full hover:bg-red-500/30 transition-colors flex items-center gap-1"
             >
               <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,17 +186,19 @@ export default function ProductFilter() {
       </div>
 
       {/* Filter Popup */}
-      {loading ? (
-        <div>Loading filters...</div>
-      ) : <ProductFilterPopup
-        isOpen={isPopupOpen}
-        categories={categories}
-        brands={brands}
-        onClose={() => setIsPopupOpen(false)}
-        onApplyFilters={handleApplyFilters}
-        initialFilters={appliedFilters}
-      />}
+      {
+        loading ? (
+          <div>Loading filters...</div>
+        ) : <ProductFilterPopup
+          isOpen={isPopupOpen}
+          categories={categories}
+          brands={brands}
+          onClose={() => setIsPopupOpen(false)}
+          onApplyFilters={handleApplyFilters}
+          initialFilters={appliedFilters}
+        />
+      }
 
-    </div>
+    </div >
   );
 }

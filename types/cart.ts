@@ -1,4 +1,4 @@
-import { Product } from './product';
+import { AuditableFields, Product } from './product';
 
 export interface CartItem {
   id: number;
@@ -6,15 +6,12 @@ export interface CartItem {
   productId: number;
   quantity: number;
   addedAt: string;
-  updatedAt: string;
+  updatedAt: Date;
   product: Product;
 }
 
-export interface Cart {
-  id: number;
+export interface Cart extends AuditableFields {
   userId: number;
-  createdAt: string;
-  updatedAt: string;
   items: CartItem[];
 }
 

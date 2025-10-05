@@ -19,23 +19,24 @@ import {
 } from "@/components/ui/popover";
 import { useState } from "react";
 
-export interface Option {
-  value: string;
+export interface Option<T> {
+  value: T;
   label: string;
   disabled?: boolean;
 }
 
-interface MultiSelectProps {
-  options: Option[];
-  selected: string[];
-  onChange: (selected: string[]) => void;
+interface MultiSelectProps<T> {
+  options: Option<T>[];
+  selected: T[];
+  onChange: (selected: T[]) => void;
   placeholder?: string;
   maxSelected?: number;
   disabled?: boolean;
   className?: string;
+  name: string
 }
 
-export function MultiSelect({
+export function MultiSelect<T>({
   options,
   selected,
   onChange,
@@ -43,7 +44,8 @@ export function MultiSelect({
   maxSelected,
   disabled,
   className,
-}: MultiSelectProps) {
+  name = "item"
+}: MultiSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -51,7 +53,7 @@ export function MultiSelect({
     o.label.toLowerCase().includes(search.toLowerCase())
   );
 
-  const toggleValue = (val: string) => {
+  const toggleValue = (val: T) => {
     if (selected.includes(val)) {
       onChange(selected.filter((v) => v !== val));
     } else {
@@ -71,7 +73,7 @@ export function MultiSelect({
         >
           {selected.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              Selected {selected.length} item{selected.length > 1 ? 's' : ''}
+              Selected {selected.length} {name}
             </div>
           ) : (
             <span className="text-muted-foreground">{placeholder}</span>
@@ -88,9 +90,9 @@ export function MultiSelect({
           <CommandList>
             {filtered.length > 0 ? (
               <CommandGroup>
-                {filtered.map((opt) => (
+                {filtered.map((opt, i) => (
                   <CommandItem
-                    key={opt.value}
+                    key={i}
                     disabled={opt.disabled}
                     onSelect={() => toggleValue(opt.value)}
                   >

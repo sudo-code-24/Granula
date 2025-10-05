@@ -4,8 +4,8 @@ export interface ProductFilters {
   page?: number;
   limit?: number;
   search?: string;
-  category?: string;
-  brand?: string;
+  categoryIds?: number[];
+  brandIds?: number[];
   minPrice?: number;
   maxPrice?: number;
 }
@@ -18,17 +18,23 @@ export class ProductAPI {
    */
   static async getProducts(filters: ProductFilters = {}): Promise<ProductListResponse> {
     const params = new URLSearchParams();
-    
+
     if (filters.page) params.append('page', filters.page.toString());
     if (filters.limit) params.append('limit', filters.limit.toString());
     if (filters.search) params.append('search', filters.search);
-    if (filters.category) params.append('category', filters.category);
-    if (filters.brand) params.append('brand', filters.brand);
+    if (filters.categoryIds?.length) {
+      filters.categoryIds?.forEach(c => params.append("category", c.toString()));
+    };
+    if (filters.brandIds?.length) {
+      filters.brandIds?.forEach(c => params.append("brand", c.toString()));
+    };
     if (filters.minPrice) params.append('minPrice', filters.minPrice.toString());
     if (filters.maxPrice) params.append('maxPrice', filters.maxPrice.toString());
 
     const url = `${this.baseUrl}?${params.toString()}`;
-    const response = await fetch(url);
+    console.log("fetching products ", url);
+
+    const response = await fetch(url, { method: "GET" });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch products: ${response.status}`);
@@ -111,15 +117,15 @@ export class ProductAPI {
   /**
    * Get products by category
    */
-  static async getProductsByCategory(category: string, filters: Omit<ProductFilters, 'category'> = {}): Promise<ProductListResponse> {
-    return this.getProducts({ ...filters, category });
+  static async getProductsByCategory(categoryIds: number[], filters: Omit<ProductFilters, 'category'> = {}): Promise<ProductListResponse> {
+    return this.getProducts({ ...filters, categoryIds });
   }
 
   /**
    * Get products by brand
    */
-  static async getProductsByBrand(brand: string, filters: Omit<ProductFilters, 'brand'> = {}): Promise<ProductListResponse> {
-    return this.getProducts({ ...filters, brand });
+  static async getProductsByBrand(brandIds: number[], filters: Omit<ProductFilters, 'brand'> = {}): Promise<ProductListResponse> {
+    return this.getProducts({ ...filters, brandIds });
   }
 
   /**

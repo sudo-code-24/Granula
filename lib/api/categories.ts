@@ -1,13 +1,5 @@
-export interface Category {
-  id: number;
-  name: string;
-  description?: string;
-  slug: string;
-  image?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Category } from "@/app/generated/prisma";
+import { APIResponse } from "@/types/APIResponse";
 
 export class CategoryAPI {
   private static baseUrl = '/api/categories';
@@ -15,17 +7,21 @@ export class CategoryAPI {
   /**
    * Fetch all categories
    */
-  static async getCategories(isActive: boolean = true): Promise<Category[]> {
-    const params = new URLSearchParams();
-    params.append('isActive', isActive.toString());
+  static async getCategories(isActive: boolean = true): Promise<APIResponse<Category[]>> {
+    try {
+      const params = new URLSearchParams();
+      params.append('isActive', isActive.toString());
 
-    const url = `${this.baseUrl}?${params.toString()}`;
-    const response = await fetch(url);
+      const url = `${this.baseUrl}?${params.toString()}`;
+      const response = await fetch(url);
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch categories: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch categories: ${response.status}`);
+      }
+      const result: APIResponse<Category[]> = await response.json();
+      return result;
+    } catch (error) {
+      throw error
     }
-
-    return response.json();
   }
 }

@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { AuditableFields } from "./product";
 
 declare module "next-auth" {
   interface User {
@@ -25,18 +26,17 @@ declare module "next-auth" {
     } | null;
   }
 
+  interface Role extends AuditableFields {
+    name: string;
+    description: string | null;
+    level: number;
+  }
+
   interface Session {
     user: {
       id: string;
       email: string;
-      role: {
-        id: string;
-        name: string;
-        description: string | null;
-        level: number;
-        createdAt: Date;
-        updatedAt: Date;
-      };
+      role: Role;
       profile: {
         id: string;
         userId: string;
@@ -53,14 +53,10 @@ declare module "next-auth" {
 }
 
 declare module "next-auth/jwt" {
-  interface JWT {
+  interface JWT extends AuditableFields {
     role: {
-      id: string;
-      name: string;
       description: string | null;
       level: number;
-      createdAt: Date;
-      updatedAt: Date;
     };
     profile: {
       id: string;

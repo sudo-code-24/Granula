@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { Product } from "@/types/product";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { addToCart } from "@/lib/store/cartSlice";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { ClientOnly } from "@/components/ClientOnly";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { Product } from "@/types/product";
 
 interface AddToCartButtonProps {
   product: Product;

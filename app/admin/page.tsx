@@ -8,8 +8,8 @@ import { useAuth } from '@/lib/useAuth';
 import { useClientSide } from '@/hooks/use-client-side';
 import { useErrorHandler } from '@/hooks/use-error-handler';
 import { ProductAPI } from '@/lib/api/products';
-import { Product } from '@/types/product';
 import { useState, useEffect } from 'react';
+import { Product } from '@/types/product';
 
 export default function AdminPage() {
   const isClient = useClientSide();
@@ -135,13 +135,12 @@ export default function AdminPage() {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              product.stock > 10 
-                                ? 'bg-green-100 text-green-800' 
-                                : product.stock > 0 
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.stock > 10
+                                ? 'bg-green-100 text-green-800'
+                                : product.stock > 0
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
                               {product.stock} in stock
                             </span>
                           </td>

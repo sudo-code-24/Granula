@@ -7,85 +7,80 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { MultiSelect } from "@/components/ui/multi-select";
-import { Category, Brand } from '@/types/product';
+import { ProductFilter, PriceRange, SortOption } from '@/types/product';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+
+import { defaultFilters, getLabelbyId, getLabelByValue, getPriceRangeLabel, getPriceRangeValues, priceFilterOptions, priceRanges, sortFilterOptions } from '@/lib/helpers';
+import { Category, Brand } from '@/app/generated/prisma';
 
 interface ProductFilterPopupProps {
   isOpen: boolean;
   categories?: Category[];
   brands?: Brand[];
   onClose: () => void;
-  onApplyFilters?: (filters: FilterState) => void;
-  initialFilters?: FilterState;
-}
-
-interface FilterState {
-  categories: string[];
-  brands: string[];
-  priceRange: string;
-  sort: string;
+  onApplyFilters?: (filters: ProductFilter) => void;
+  initialFilters?: ProductFilter;
 }
 
 export default function ProductFilterPopup({ isOpen, categories = [], brands = [], onClose, onApplyFilters, initialFilters }: ProductFilterPopupProps) {
-  const [selectedCategories, setCategories] = useState<Category[]>([]);
-  const [selectedBrands, setBrands] = useState<Brand[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<FilterState>({
-    categories: [],
-    brands: [],
-    priceRange: '',
-    sort: '',
+  const [filters, setFilters] = useState<ProductFilter>({
+    ...defaultFilters
   });
 
-  const priceFilterOptions = [
-    { value: '_', label: 'All Prices' },
-    { value: 'under-25', label: 'Under $25' },
-    { value: '25-50', label: '$25 - $50' },
-    { value: '50-100', label: '$50 - $100' },
-    { value: '100-250', label: '$100 - $250' },
-    { value: '250-500', label: '$250 - $500' },
-    { value: 'over-500', label: 'Over $500' },
-  ]
-  const sortFilterOptions = [
-    { value: 'newest', label: 'Newest' },
-    { value: 'oldest', label: 'Oldest' },
-    { value: 'price-low', label: 'Price: Low to High' },
-    { value: 'price-high', label: 'Price: High to Low' },
-    { value: 'rating', label: 'Highest Rated' },
-    { value: 'popular', label: 'Most Popular' }
-  ]
+  const [priceRange, setPriceRange] = useState<string>("")
+
   // Sync internal filters with initialFilters prop
   useEffect(() => {
     if (initialFilters) {
-      setFilters(initialFilters);
+      setFilters({ ...initialFilters });
     }
-  }, [initialFilters]);
+    initializePriceRange();
+  }, [initialFilters, isOpen]);
 
+  const initializePriceRange = () => {
+    const range = filters.priceRange;
+    const search = priceRanges.find(r => r.value.min == range?.min && r.value.max == range.max);
+    if (search) {
+      handlePriceRangeChange(search.key)
+    }
+  }
 
-  const handleFilterChange = (key: keyof FilterState, value: string | string[]) => {
+  const handlePriceRangeChange = (value: string) => {
+    setPriceRange(value)
+    const range = getPriceRangeValues(value)
+    handleFilterChange('priceRange', range)
+  }
+
+  const handleFilterChange = <T extends keyof ProductFilter>(
+    key: T,
+    value: ProductFilter[T] | ProductFilter[T][]
+  ) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const handleApplyFilters = () => {
     onApplyFilters?.(filters);
-    onClose();
+    beforeClose();
   };
 
   const handleClearFilters = () => {
     setFilters({
-      categories: [],
-      brands: [],
-      priceRange: '',
-      sort: '',
+      ...defaultFilters
     });
+    setPriceRange("")
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      beforeClose();
     }
   };
+
+  const beforeClose = () => {
+    setFilters({ ...initialFilters })
+    onClose();
+  }
 
   if (!isOpen) return null;
 
@@ -107,7 +102,6 @@ export default function ProductFilterPopup({ isOpen, categories = [], brands = [
             <X className="h-5 w-5" />
           </Button>
         </div>
-
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Filter Grid */}
@@ -119,13 +113,14 @@ export default function ProductFilterPopup({ isOpen, categories = [], brands = [
               </label>
               <MultiSelect
                 options={categories.map(category => ({
-                  value: category.name,
+                  value: category.id,
                   label: category.name
                 }))}
-                selected={filters.categories}
-                onChange={(selected) => handleFilterChange('categories', selected)}
+                selected={filters.categoryIds ?? []}
+                onChange={(selected: number[]) => handleFilterChange('categoryIds', selected)}
                 placeholder="Select categories..."
                 className="bg-neutral-900 border-gray-600 text-white"
+                name={(filters.categoryIds ?? []).length > 1 ? 'categories' : 'category'}
               />
             </div>
 
@@ -136,13 +131,14 @@ export default function ProductFilterPopup({ isOpen, categories = [], brands = [
               </label>
               <MultiSelect
                 options={brands.map(brand => ({
-                  value: brand.name,
+                  value: brand.id,
                   label: brand.name
                 }))}
-                selected={filters.brands}
-                onChange={(selected) => handleFilterChange('brands', selected)}
+                selected={filters.brandIds ?? []}
+                onChange={(selected) => handleFilterChange('brandIds', selected)}
                 placeholder="Select brands..."
                 className="bg-neutral-900 border-gray-600 text-white"
+                name={(filters.brandIds ?? []).length > 1 ? 'brands' : 'brand'}
               />
             </div>
 
@@ -151,13 +147,13 @@ export default function ProductFilterPopup({ isOpen, categories = [], brands = [
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Price Range
               </label>
-              <Select value={filters.priceRange || ""} onValueChange={(value) => handleFilterChange('priceRange', value)}>
+              <Select value={priceRange} onValueChange={(value) => handlePriceRangeChange(value)}>
                 <SelectTrigger className="w-full px-4 py-3 text-sm bg-neutral-900  border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                  <SelectValue placeholder="All Prices" />
+                  <SelectValue placeholder="Select Price Range" />
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-900  border border-gray-600">
-                  {priceFilterOptions.map(({ value, label }) =>
-                    <SelectItem key={value} value={value} className="text-white hover:bg-gray-700">{label}</SelectItem>
+                  {priceFilterOptions.map(({ value, label }, i) =>
+                    <SelectItem key={i} value={value} className="text-white hover:bg-gray-700">{label}</SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -168,72 +164,72 @@ export default function ProductFilterPopup({ isOpen, categories = [], brands = [
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Sort By
               </label>
-              <Select value={filters.sort || ""} onValueChange={(value) => handleFilterChange('sort', value)}>
+              <Select value={filters.sort} onValueChange={(value) => handleFilterChange('sort', value as SortOption)}>
                 <SelectTrigger className="w-full px-4 py-3 text-sm bg-neutral-900  border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
                   <SelectValue placeholder="Sort By" />
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-900  border border-gray-600">
                   {sortFilterOptions.map(({ value, label }) => <SelectItem key={value} value={value} className="text-white hover:bg-gray-700">{label}</SelectItem>)}
-
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           {/* Active Filters Display */}
-          {(filters.categories.length > 0 || filters.brands.length > 0 || filters.priceRange || filters.sort) && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Active Filters
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {filters.categories.map(category => (
-                  <div key={category} className="px-3 py-1 bg-orange-500 text-white text-sm rounded-full flex items-center gap-2">
-                    <span>{category}</span>
-                    <button
-                      onClick={() => handleFilterChange('categories', filters.categories.filter(c => c !== category))}
-                      className="hover:bg-orange-600 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-                {filters.brands.map(brand => (
-                  <div key={brand} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-full flex items-center gap-2">
-                    <span>{brand}</span>
-                    <button
-                      onClick={() => handleFilterChange('brands', filters.brands.filter(b => b !== brand))}
-                      className="hover:bg-blue-600 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-                {filters.priceRange && (
-                  <div className="px-3 py-1 bg-green-500 text-white text-sm rounded-full flex items-center gap-2">
-                    <span>{filters.priceRange.replace('-', ' - ').replace('under', 'Under $').replace('over', 'Over $')}</span>
-                    <button
-                      onClick={() => handleFilterChange('priceRange', '')}
-                      className="hover:bg-green-600 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
-                {filters.sort && (
-                  <div className="px-3 py-1 bg-gray-800 text-white text-sm rounded-full flex items-center gap-2">
-                    <span>{filters.sort.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                    <button
-                      onClick={() => handleFilterChange('sort', '')}
-                      className="hover:bg-purple-600 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
+          {((filters.categoryIds?.length ?? 0) > 0 || (filters.brandIds?.length ?? 0) > 0
+            || filters.priceRange || filters.sort) && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Active Filters
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {filters.categoryIds?.map(categoryId => (
+                    <div key={categoryId} className="px-3 py-1 bg-orange-500 text-white text-sm rounded-full flex items-center gap-2">
+                      <span>{getLabelbyId(categories, categoryId)}</span>
+                      <button
+                        onClick={() => handleFilterChange('categoryIds', filters.categoryIds?.filter(c => c !== categoryId))}
+                        className="hover:bg-orange-600 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {filters.brandIds?.map(brandId => (
+                    <div key={brandId} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-full flex items-center gap-2">
+                      <span>{getLabelbyId(brands, brandId)}</span>
+                      <button
+                        onClick={() => handleFilterChange('brandIds', filters.brandIds?.filter(b => b !== brandId))}
+                        className="hover:bg-blue-600 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {(filters.priceRange && priceRange) && (
+                    <div className="px-3 py-1 bg-green-500 text-white text-sm rounded-full flex items-center gap-2">
+                      <span>{getPriceRangeLabel(filters.priceRange).replace('-', ' - ').replace('under', 'Under $').replace('over', 'Over $')}</span>
+                      <button
+                        onClick={() => { handleFilterChange('priceRange', defaultFilters.priceRange); setPriceRange("") }}
+                        className="hover:bg-green-600 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                  {filters.sort && (
+                    <div className="px-3 py-1 bg-gray-800 text-white text-sm rounded-full flex items-center gap-2">
+                      <span>{getLabelByValue(sortFilterOptions, filters.sort)?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                      <button
+                        onClick={() => handleFilterChange('sort', defaultFilters.sort)}
+                        className="hover:bg-purple-600 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         {/* Footer */}
